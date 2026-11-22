@@ -1,26 +1,34 @@
 #pragma once
 #include "PluginProcessor.h"
 
-class VintageLookAndFeel : public juce::LookAndFeel_V4
+class OptoLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
-    void drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos,
-                           float startAngle, float endAngle, juce::Slider&) override
-    {
-        auto bounds = juce::Rectangle<float> ((float) x, (float) y, (float) w, (float) h).reduced (6.0f);
-        const float r = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.5f;
-        const auto c = bounds.getCentre();
+    OptoLookAndFeel();
 
-        g.setColour (juce::Colour (0xff141414));
-        g.fillEllipse (c.x - r, c.y - r, 2.0f * r, 2.0f * r);
-        g.setColour (juce::Colour (0xffd8c9a3));
-        g.drawEllipse (c.x - r, c.y - r, 2.0f * r, 2.0f * r, 2.0f);
+    void drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h,
+                           float sliderPosProportional, float rotaryStartAngle,
+                           float rotaryEndAngle, juce::Slider& slider) override;
 
-        const float angle = startAngle + pos * (endAngle - startAngle);
-        juce::Path p;
-        p.addRoundedRectangle (-2.0f, -r + 5.0f, 4.0f, r * 0.45f, 1.5f);
-        g.fillPath (p, juce::AffineTransform::rotation (angle).translated (c));
-    }
+    void drawToggleButton (juce::Graphics& g, juce::ToggleButton& button,
+                           bool shouldDrawButtonAsHighlighted,
+                           bool shouldDrawButtonAsDown) override;
+
+    void drawButtonBackground (juce::Graphics& g, juce::Button& button,
+                               const juce::Colour& backgroundColour,
+                               bool shouldDrawButtonAsHighlighted,
+                               bool shouldDrawButtonAsDown) override;
+
+    void drawButtonText (juce::Graphics& g, juce::TextButton& button,
+                         bool shouldDrawButtonAsHighlighted,
+                         bool shouldDrawButtonAsDown) override;
+
+private:
+    void drawMainKnob (juce::Graphics& g, juce::Rectangle<float> bounds, float pos,
+                       float startAngle, float endAngle, bool isVuSelector);
+
+    void drawSmallKnob (juce::Graphics& g, juce::Rectangle<float> bounds, float pos,
+                        float startAngle, float endAngle);
 };
 
 class OptoCompEditor : public juce::AudioProcessorEditor, private juce::Timer
@@ -35,24 +43,51 @@ public:
 private:
     void timerCallback() override;
 
-    struct Knob
+    struct RotaryControl
     {
         juce::Slider slider;
-        juce::Label label;
+        juce::Label titleLabel;
         std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
     };
 
-    void setupKnob (Knob&, const juce::String& paramId, const juce::String& text);
+    enum class VuMode { Input = 0, GainReduction = 1, Output = 2 };
+
+    void configureBigKnob (RotaryControl& ctrl, const juce::String& paramId, const juce::String& labelText);
+    void configureSmallKnob (RotaryControl& ctrl, const juce::String& paramId, const juce::String& labelText);
+    void drawBrushedPanel (juce::Graphics& g, juce::Rectangle<float> bounds,
+                         juce::Colour topCol, juce::Colour botCol, int seed);
+    void drawLogoAndTitle (juce::Graphics& g, juce::Rectangle<float> area);
+    void drawScaleTicks (juce::Graphics& g, juce::Point<float> centre, float radius,
+                         float startAngle, float endAngle, bool withNumbers);
+    void drawVuMeter (juce::Graphics& g, juce::Rectangle<float> bounds);
+    void setVuMode (VuMode newMode);
 
     OptoCompProcessor& proc;
-    VintageLookAndFeel laf;
+    OptoLookAndFeel laf;
 
-    Knob peakKnob, gainKnob, tubeKnob, mixKnob;
-    juce::ComboBox modeBox;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment;
+    RotaryControl gainKnob;
+    RotaryControl peakKnob;
+    RotaryControl hiFreqKnob;
+    RotaryControl mixKnob;
+    RotaryControl trimKnob;
 
-    juce::Rectangle<int> meterArea;
-    float shownGr = 0.0f;
+    juce::ToggleButton modeSwitch { "COMPRESS / LIMIT" };
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> modeAttachment;
+
+    juce::TextButton btn50Hz { "50Hz" };
+    juce::TextButton btn60Hz { "60Hz" };
+    juce::TextButton btnOff  { "OFF" };
+    int analogMode = 2; // 0: 50Hz, 1: 60Hz, 2: OFF
+
+    juce::Slider vuDisplayKnob;
+    VuMode vuMode = VuMode::GainReduction;
+
+    juce::Rectangle<float> topPanelBounds;
+    juce::Rectangle<float> bottomPanelBounds;
+    juce::Rectangle<float> vuMeterBounds;
+
+    float displayedNeedlePos = 0.0f; // -1.0 .. +1.0
+    float smoothGrDb = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OptoCompEditor)
 };
