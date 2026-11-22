@@ -48,11 +48,9 @@ void OptoLookAndFeel::drawMainKnob (juce::Graphics& g, juce::Rectangle<float> bo
     const auto centre = knobArea.getCentre();
     auto circle = juce::Rectangle<float> (centre.x - radius, centre.y - radius, diameter, diameter);
 
-    // Мягкая тень под ручкой
     g.setColour (juce::Colours::black.withAlpha (0.55f));
     g.fillEllipse (circle.translated (0.0f, 3.0f));
 
-    // Внешний металлический обод
     juce::ColourGradient bezelGrad (colMetalLight, centre.x, circle.getY(),
                                     colMetalDark, centre.x, circle.getBottom(), false);
     g.setGradientFill (bezelGrad);
@@ -61,18 +59,15 @@ void OptoLookAndFeel::drawMainKnob (juce::Graphics& g, juce::Rectangle<float> bo
     g.setColour (juce::Colours::black.withAlpha (0.65f));
     g.drawEllipse (circle, 1.5f);
 
-    // Тело ручки (тёмный анодированный металл)
     auto cap = circle.reduced (radius * 0.14f);
     juce::ColourGradient capGrad (juce::Colour (0xff2b2e31), cap.getX(), cap.getY(),
                                   juce::Colour (0xff121416), cap.getX(), cap.getBottom(), false);
     g.setGradientFill (capGrad);
     g.fillEllipse (cap);
 
-    // Тонкий блик по верхнему краю шапки
     g.setColour (juce::Colours::white.withAlpha (0.14f));
     g.drawEllipse (cap.reduced (1.0f), 1.0f);
 
-    // Указатель положения
     const float angle = startAngle + pos * (endAngle - startAngle);
     juce::Path pointer;
     const float ptrLen = isVuSelector ? cap.getHeight() * 0.34f : cap.getHeight() * 0.38f;
@@ -117,7 +112,6 @@ void OptoLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButton& b
     auto area = button.getLocalBounds().toFloat();
     const bool isLimit = button.getToggleState();
 
-    // Подписи COMPRESS сверху и LIMIT снизу, как на референсе
     g.setFont (juce::FontOptions (11.5f, juce::Font::bold));
     g.setColour (!isLimit ? colTextBright : colTextMuted);
     g.drawText ("COMPRESS", area.removeFromTop (20.0f), juce::Justification::centred);
@@ -125,21 +119,18 @@ void OptoLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButton& b
     g.setColour (isLimit ? colTextBright : colTextMuted);
     g.drawText ("LIMIT", area.removeFromBottom (20.0f), juce::Justification::centred);
 
-    // Металлический тумблер по центру
     const float toggleW = 24.0f;
     const float toggleH = 44.0f;
     auto slot = juce::Rectangle<float> (area.getCentreX() - toggleW * 0.5f,
                                        area.getCentreY() - toggleH * 0.5f,
                                        toggleW, toggleH);
 
-    // Гайка / посадочное кольцо
     auto collar = slot.reduced (3.0f);
     g.setColour (juce::Colour (0xff1c1e20));
     g.fillRoundedRectangle (collar, 5.0f);
     g.setColour (juce::Colours::white.withAlpha (0.12f));
     g.drawRoundedRectangle (collar, 5.0f, 1.0f);
 
-    // Рычаг тумблера (вверх = COMPRESS, вниз = LIMIT)
     const float leverY = isLimit ? slot.getBottom() - 16.0f : slot.getY() + 2.0f;
     auto lever = juce::Rectangle<float> (slot.getCentreX() - 5.5f, leverY, 11.0f, 14.0f);
 
@@ -196,8 +187,6 @@ OptoCompEditor::OptoCompEditor (OptoCompProcessor& p)
     configureSmallKnob (hiFreqKnob, "tube", "HI FREQ");
     configureSmallKnob (mixKnob,  "mix",  "MIX");
     configureSmallKnob (trimKnob, "gain", "TRIM");
-    // Привязываем TRIM к "gain" только если отдельного параметра "trim" ещё нет в APVTS;
-    // если есть "trim", замени "gain" выше на "trim".
 
     modeSwitch.setClickingTogglesState (true);
     addAndMakeVisible (modeSwitch);
@@ -290,7 +279,6 @@ void OptoCompEditor::drawBrushedPanel (juce::Graphics& g, juce::Rectangle<float>
     g.setGradientFill (grad);
     g.fillRect (bounds);
 
-    // Тонкий горизонтальный шлиф по металлу
     juce::Random rng (seed);
     for (int i = 0; i < 140; ++i)
     {
@@ -306,7 +294,6 @@ void OptoCompEditor::drawBrushedPanel (juce::Graphics& g, juce::Rectangle<float>
 
 void OptoCompEditor::drawLogoAndTitle (juce::Graphics& g, juce::Rectangle<float> area)
 {
-    // Иконка волновой формы в стиле референса
     auto iconBox = area.removeFromTop (44.0f).withSizeKeepingCentre (68.0f, 38.0f);
     juce::Path wave;
     const float w = iconBox.getWidth();
@@ -339,7 +326,7 @@ void OptoCompEditor::drawScaleTicks (juce::Graphics& g, juce::Point<float> centr
                                      float radius, float startAngle, float endAngle,
                                      bool withNumbers)
 {
-    const int majorCount = 10; // 0, 10, 20 ... 100
+    const int majorCount = 10;
     const int subPerMajor = 4;
 
     for (int i = 0; i <= majorCount * subPerMajor; ++i)
@@ -377,7 +364,6 @@ void OptoCompEditor::drawScaleTicks (juce::Graphics& g, juce::Point<float> centr
 
 void OptoCompEditor::drawVuMeter (juce::Graphics& g, juce::Rectangle<float> bounds)
 {
-    // Внешняя тёмная рамка прибора
     g.setColour (juce::Colour (0xff121416));
     g.fillRoundedRectangle (bounds, 6.0f);
     g.setColour (juce::Colours::white.withAlpha (0.10f));
@@ -389,7 +375,6 @@ void OptoCompEditor::drawVuMeter (juce::Graphics& g, juce::Rectangle<float> boun
     g.setGradientFill (faceGrad);
     g.fillRoundedRectangle (face, 4.0f);
 
-    // Дуга шкалы внутри VU-метра
     const float pi = juce::MathConstants<float>::pi;
     const float arcStart = -pi * 0.24f;
     const float arcEnd   =  pi * 0.24f;
@@ -403,7 +388,6 @@ void OptoCompEditor::drawVuMeter (juce::Graphics& g, juce::Rectangle<float> boun
     g.setColour (juce::Colour (0xff2b3036));
     g.strokePath (scaleArc, juce::PathStrokeType (1.4f));
 
-    // Деления VU (-20 .. 0 .. +3 dB)
     struct Tick { float normPos; const char* label; bool red; };
     const Tick ticks[] = {
         { -1.00f, "-20", false },
@@ -443,7 +427,6 @@ void OptoCompEditor::drawVuMeter (juce::Graphics& g, juce::Rectangle<float> boun
         }
     }
 
-    // Стрелка прибора
     const float needleAng = juce::jlimit (-1.0f, 1.0f, displayedNeedlePos) * arcEnd;
     const float nSin = std::sin (needleAng);
     const float nCos = -std::cos (needleAng);
@@ -453,7 +436,6 @@ void OptoCompEditor::drawVuMeter (juce::Graphics& g, juce::Rectangle<float> boun
     g.drawLine (pivot.x + 12.0f * nSin, pivot.y + 12.0f * nCos,
                 pivot.x + needleLen * nSin, pivot.y + needleLen * nCos, 1.8f);
 
-    // Внутренний винт / тень под стеклом
     g.setColour (juce::Colours::white.withAlpha (0.14f));
     g.drawRoundedRectangle (face.reduced (0.5f), 4.0f, 1.0f);
 }
@@ -463,17 +445,14 @@ void OptoCompEditor::paint (juce::Graphics& g)
     drawBrushedPanel (g, topPanelBounds, colMetalLight, colMetalMid, 101);
     drawBrushedPanel (g, bottomPanelBounds, colBottomTop, colBottomBot, 202);
 
-    // Разделительная линия между верхней и нижней панелями
     g.setColour (juce::Colours::black.withAlpha (0.85f));
     g.drawHorizontalLine (juce::roundToInt (bottomPanelBounds.getY()), 0.0f, (float) getWidth());
     g.setColour (juce::Colours::white.withAlpha (0.08f));
     g.drawHorizontalLine (juce::roundToInt (bottomPanelBounds.getY()) + 1, 0.0f, (float) getWidth());
 
-    // Левый блок: логотип и название
     auto leftArea = topPanelBounds.removeFromLeft (topPanelBounds.getWidth() * 0.17f);
     drawLogoAndTitle (g, leftArea.reduced (8.0f, 22.0f));
 
-    // Шкалы вокруг больших ручек GAIN и PEAK REDUCTION
     const float pi = juce::MathConstants<float>::pi;
     const float startA = pi * 1.22f;
     const float endA   = pi * 2.78f;
@@ -486,10 +465,8 @@ void OptoCompEditor::paint (juce::Graphics& g)
     const float peakRadius = juce::jmin (peakR.getWidth(), peakR.getHeight()) * 0.5f;
     drawScaleTicks (g, peakR.getCentre(), peakRadius, startA, endA, true);
 
-    // VU-метр
     drawVuMeter (g, vuMeterBounds);
 
-    // Правый блок: VU DISPLAY (INPUT / GR / OUTPUT)
     auto vuArea = vuDisplayKnob.getBounds().toFloat();
     const float vuRadius = juce::jmin (vuArea.getWidth(), vuArea.getHeight()) * 0.36f;
     drawScaleTicks (g, vuArea.getCentre(), vuRadius, pi * 1.25f, pi * 2.75f, false);
@@ -503,20 +480,25 @@ void OptoCompEditor::paint (juce::Graphics& g)
 
     g.setColour (vuMode == VuMode::Input ? colTextBright : colTextMuted);
     g.setFont (juce::FontOptions (11.0f, vuMode == VuMode::Input ? juce::Font::bold : juce::Font::plain));
-    g.drawText ("INPUT", vuArea.getX() - 46.0f, vuArea.getCentreY() - 10.0f, 42.0f, 20.0f,
-                juce::Justification::centredRight);
+    g.drawText ("INPUT",
+                juce::roundToInt (vuArea.getX() - 46.0f),
+                juce::roundToInt (vuArea.getCentreY() - 10.0f),
+                42, 20, juce::Justification::centredRight);
 
     g.setColour (vuMode == VuMode::GainReduction ? colAccentRed : colTextMuted);
     g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-    g.drawText ("GR", vuArea.getCentreX() - 20.0f, vuArea.getY() - 6.0f, 40.0f, 18.0f,
-                juce::Justification::centred);
+    g.drawText ("GR",
+                juce::roundToInt (vuArea.getCentreX() - 20.0f),
+                juce::roundToInt (vuArea.getY() - 6.0f),
+                40, 18, juce::Justification::centred);
 
     g.setColour (vuMode == VuMode::Output ? colTextBright : colTextMuted);
     g.setFont (juce::FontOptions (11.0f, vuMode == VuMode::Output ? juce::Font::bold : juce::Font::plain));
-    g.drawText ("OUTPUT", vuArea.getRight() + 4.0f, vuArea.getCentreY() - 10.0f, 54.0f, 20.0f,
-                juce::Justification::centredLeft);
+    g.drawText ("OUTPUT",
+                juce::roundToInt (vuArea.getRight() + 4.0f),
+                juce::roundToInt (vuArea.getCentreY() - 10.0f),
+                54, 20, juce::Justification::centredLeft);
 
-    // Надпись ANALOG слева внизу
     g.setColour (colTextBright);
     g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
     g.drawText ("ANALOG",
@@ -534,9 +516,8 @@ void OptoCompEditor::resized()
     bottomPanelBounds = bounds.removeFromBottom (bottomH);
     topPanelBounds    = bounds;
 
-    // --- Верхняя панель ---
     auto top = topPanelBounds;
-    top.removeFromLeft (top.getWidth() * 0.17f); // место под логотип и OPTOCOMP
+    top.removeFromLeft (top.getWidth() * 0.17f);
 
     auto switchCol = top.removeFromLeft (92.0f);
     modeSwitch.setBounds (switchCol.reduced (4.0f, 46.0f).toNearestInt());
@@ -545,7 +526,6 @@ void OptoCompEditor::resized()
     vuDisplayKnob.setBounds (rightSection.withSizeKeepingCentre (96.0f, 96.0f)
                                          .translated (0.0f, 12.0f).toNearestInt());
 
-    // Между тумблером и VU-селектором: GAIN, VU METER, PEAK REDUCTION
     const float midW = top.getWidth();
     auto gainCol = top.removeFromLeft (midW * 0.29f);
     auto vuCol   = top.removeFromLeft (midW * 0.42f);
@@ -566,9 +546,8 @@ void OptoCompEditor::resized()
 
     vuMeterBounds = vuCol.reduced (14.0f, 52.0f);
 
-    // --- Нижняя панель ---
     auto bot = bottomPanelBounds.reduced (14.0f, 14.0f);
-    bot.removeFromLeft (84.0f); // место под ANALOG
+    bot.removeFromLeft (84.0f);
 
     auto freqGroup = bot.removeFromLeft (186.0f).reduced (0.0f, 8.0f);
     const float btnW = freqGroup.getWidth() / 3.0f;
@@ -593,23 +572,3 @@ void OptoCompEditor::resized()
 
 void OptoCompEditor::timerCallback()
 {
-    const float rawGr = juce::jmax (0.0f, proc.grMeterDb.load());
-    smoothGrDb += 0.25f * (rawGr - smoothGrDb);
-
-    float targetNorm = 0.0f;
-    if (vuMode == VuMode::GainReduction)
-    {
-        // 0 dB -> правее центра (~0.25), больше GR -> стрелка уходит влево в минус
-        const float grNorm = juce::jlimit (0.0f, 1.0f, smoothGrDb / 20.0f);
-        targetNorm = 0.25f - grNorm * 1.25f;
-    }
-    else
-    {
-        // Базовый отклик для INPUT / OUTPUT, чтобы стрелка не стояла мёртво
-        const float approxLevel = juce::jlimit (0.0f, 1.0f, smoothGrDb / 14.0f);
-        targetNorm = -0.85f + approxLevel * 1.15f;
-    }
-
-    displayedNeedlePos += 0.22f * (targetNorm - displayedNeedlePos);
-    repaint (vuMeterBounds.getExpanded (4.0f).toNearestInt());
-}
